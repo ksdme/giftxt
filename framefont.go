@@ -12,13 +12,12 @@ import (
 
 var (
 	dpi         = 72.0
-	fontfile    = "../resources/WorkSans-ExtraBold.ttf"
 	maxFontSize = 300.0
 )
 
 // LoadTypeFace loads a font from file and returns it.
 // Font file cannot be customized.
-func LoadTypeFace() *truetype.Font {
+func LoadTypeFace(fontfile string) *truetype.Font {
 	fontBytes, err := ioutil.ReadFile(fontfile)
 	if err != nil {
 		panic("cannot read font file")

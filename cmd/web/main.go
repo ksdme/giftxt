@@ -17,8 +17,14 @@ const (
 	delay        = 50
 )
 
+var (
+	port     = os.Getenv("PORT")
+	fontfile = os.Getenv("GOPATH") + "/src/github.com/ksdme/giftxt/" +
+		"resources/WorkSans-Black.ttf"
+)
+
 // Preload all the referables
-var typeface = giftxt.LoadTypeFace()
+var typeface = giftxt.LoadTypeFace(fontfile)
 var fontSizeCrossMap = giftxt.GetFontSizeCrossMap(
 	typeface, textPortSize, cacheTill)
 
@@ -34,9 +40,6 @@ func generateGifText(text string) *gif.GIF {
 }
 
 func main() {
-	// Serving Port
-	port := os.Getenv("PORT")
-
 	if len(port) == 0 {
 		log.Fatal("PORT environment variable missing")
 	}

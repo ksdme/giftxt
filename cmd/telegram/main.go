@@ -30,7 +30,11 @@ func main() {
 
 		// Get the URL and add parameter
 		tgGifTxtBotServerURL, _ := url.Parse(*tgGifTxtBotServer)
-		tgGifTxtBotServerURL.Query().Add("text", q.Text)
+
+		query := tgGifTxtBotServerURL.Query()
+		query.Set("text", q.Text)
+
+		tgGifTxtBotServerURL.RawQuery = query.Encode()
 
 		// Create inline request response
 		result := &tb.GifResult{

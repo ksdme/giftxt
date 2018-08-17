@@ -1,20 +1,21 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/url"
-	"os"
 	"time"
 
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
-var tgBotToken = os.Getenv("GIFTXTBOT_TG_TOKEN")
-var tgGifTxtBotServer = os.Getenv("GIFTXTBOT_TG_SERVER")
-
 func main() {
+	tgBotToken := flag.String("token", "", "telegram bot access token")
+	tgGifTxtBotServer := flag.String("server", "", "giftxt base endpoint url")
+	flag.Parse()
+
 	bot, ok := tb.NewBot(tb.Settings{
-		Token:  tgBotToken,
+		Token:  *tgBotToken,
 		Poller: &tb.LongPoller{Timeout: 2 * time.Second},
 	})
 
@@ -28,7 +29,7 @@ func main() {
 		log.Println(q.ID, "Received query request")
 
 		// Get the URL and add parameter
-		tgGifTxtBotServerURL, _ := url.Parse(tgGifTxtBotServer)
+		tgGifTxtBotServerURL, _ := url.Parse(*tgGifTxtBotServer)
 		tgGifTxtBotServerURL.Query().Add("text", q.Text)
 
 		// Create inline request response

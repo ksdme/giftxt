@@ -31,50 +31,33 @@ func LoadTypeFace(fontfile string) *truetype.Font {
 	return fontParsed
 }
 
-// MeasureStringLength measures the length of the string and the font face.
-func MeasureStringLength(local *truetype.Font, size float64, text string) (fixed.Int26_6, *font.Face) {
+// GetFaceFromFontAndSize returns a face from a font and font size.
+func GetFaceFromFontAndSize(local *truetype.Font, fontSize float64) *font.Face {
 	face := truetype.NewFace(local, &truetype.Options{
-		Size: size,
 		DPI:  dpi,
+		Size: fontSize,
 	})
 
-	return font.MeasureString(face, text), &face
+	return &face
 }
 
-// GetAdjustedFontFace returns the adjusted font face for a given message.
-func GetAdjustedFontFace(local *truetype.Font, text string, max int32) *font.Face {
+// MeasureStringLength measures the length of the string and the font face.
+func MeasureStringLength(local *truetype.Font, size float64, text string) (fixed.Int26_6, *font.Face) {
+	face := GetFaceFromFontAndSize(local, size)
+	return font.MeasureString(*face, text), face
+}
+
+// GetAdjustedFontSize returns the adjusted font size for a given message.
+func GetAdjustedFontSize(local *truetype.Font, text string, max int32) float64 {
 	fixedMax := fixed.Int26_6(max << 6)
 	fontSize := maxFontSize
 
-	length, face := MeasureStringLength(local, fontSize, text)
+	length, _ := MeasureStringLength(local, fontSize, text)
 
 	for length > fixedMax {
-		fontSize -= 5
-		length, face = MeasureStringLength(local, fontSize, text)
+		fontSize -= 4
+		length, _ = MeasureStringLength(local, fontSize, text)
 	}
 
-	return face
-}
-
-// GetFontSizeCrossMap generates a cross reference map for the length vs. font face
-func GetFontSizeCrossMap(local *truetype.Font, max int32, till int) map[int]*font.Face {
-	crossMap := make(map[int]*font.Face)
-	var payload string
-
-	for length := 0; length <= till; length++ {
-		crossMap[length] = GetAdjustedFontFace(local, payload, max)
-		payload += "Z"
-	}
-
-	return crossMap
-}
-
-// ClampedStringLength returns the clamped length of
-// the string to max cache length available.
-func ClampedStringLength(text string, max int) int {
-	if len(text) > max {
-		return max
-	}
-
-	return len(text)
+	return fontSize
 }

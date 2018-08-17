@@ -1,10 +1,13 @@
 package main
 
 import (
+	"flag"
 	"image/gif"
 	"log"
 	"os"
+	"strconv"
 
+	"github.com/golang/freetype/truetype"
 	"github.com/kataras/iris"
 	"github.com/kataras/iris/context"
 	"github.com/ksdme/giftxt"
@@ -17,31 +20,56 @@ const (
 	delay        = 50
 )
 
-var (
-	port     = os.Getenv("PORT")
-	fontfile = os.Getenv("GIFTXTBOT_FONT_FILE")
-)
+// var (
+// 	port     = os.Getenv("PORT")
+// 	fontfile = os.Getenv("GIFTXTBOT_FONT_FILE")
+// )
 
 // Preload all the referables
-var typeface = giftxt.LoadTypeFace(fontfile)
-var fontSizeCrossMap = giftxt.GetFontSizeCrossMap(
-	typeface, textPortSize, cacheTill)
+var font *truetype.Font
+var fontSizeCache *giftxt.FontFaceCache
+
+func generateGlobals(fontfile, precache string) {
+	font = giftxt.LoadTypeFace(fontfile)
+
+	// If precache string is empty then
+	// load it from there, else build it
+	if len(precache) != 0 {
+		file, ok := os.Open(precache)
+
+		if ok != nil {
+			log.Println(ok)
+			log.Fatal("could not load precache")
+		}
+
+		fontSizeCache, ok = giftxt.LoadFontFaceCache(file)
+
+		if ok != nil {
+			log.Println(ok)
+			log.Fatal("could not load precache")
+		}
+	} else {
+		fontSizeCache = giftxt.GetFontSizeCrossMap(font, textPortSize, cacheTill)
+	}
+}
 
 // Generates a new GifText from a given text
 func generateGifText(text string) *gif.GIF {
 	message := giftxt.NewMessage(text)
-	length := giftxt.ClampedStringLength(message.Longest, cacheTill)
-
-	face, _ := fontSizeCrossMap[length]
+	face := fontSizeCache.GetFace(font, len(message.Longest))
 	slides := giftxt.RenderMessage(face, message.Words)
 
 	return giftxt.MakeGif(slides, delay)
 }
 
 func main() {
-	if len(port) == 0 {
-		log.Fatal("PORT environment variable missing")
-	}
+	port := flag.Uint("port", 8080, "port to bind giftxt server")
+	fontfile := flag.String("fontfile", "", "fontfile to use")
+	usePreCache := flag.String("precache", "", "precache to use")
+	flag.Parse()
+
+	// Generate all to global values
+	generateGlobals(*fontfile, *usePreCache)
 
 	app := iris.Default()
 
@@ -55,5 +83,5 @@ func main() {
 		ctx.ContentType("image/gif")
 	})
 
-	app.Run(iris.Addr(":" + port))
+	app.Run(iris.Addr(":" + strconv.Itoa(int(*port))))
 }

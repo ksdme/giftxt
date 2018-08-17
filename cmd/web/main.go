@@ -19,8 +19,7 @@ const (
 
 var (
 	port     = os.Getenv("PORT")
-	fontfile = os.Getenv("GOPATH") + "/src/github.com/ksdme/giftxt/" +
-		"resources/WorkSans-Black.ttf"
+	fontfile = os.Getenv("GIFTXTBOT_FONT_FILE")
 )
 
 // Preload all the referables
